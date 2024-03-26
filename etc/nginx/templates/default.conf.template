@@ -1,0 +1,51 @@
+server {
+    server_name localhost;
+    listen 8080;
+    ${SSL_ENABLED} listen 443 ssl;
+    ${SSL_ENABLED} ssl_certificate /etc/nginx/ssl/localhost.pem;
+    ${SSL_ENABLED} ssl_certificate_key /etc/nginx/ssl/localhost-key.pem;
+
+    root /var/www/${PROJECT_ROOT_BASE}/www;
+
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-Content-Type-Options "nosniff";
+
+    index index.html index.php;
+
+    charset utf-8;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    error_page 404 /index.php;
+
+    location ~ ^/(p00l-status)$ {
+        fastcgi_pass php-upstream;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+
+    location ~ ^/(p1ng)$ {
+        fastcgi_pass php-upstream;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+
+    location ~ ^/(<3)(/.*)?$ {
+        fastcgi_pass php-upstream;
+        fastcgi_param SCRIPT_FILENAME /var/www/h3alth/index.php;
+        include fastcgi_params;
+    }
+
+    location ~ \.php$ {
+        fastcgi_pass php-upstream;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_read_timeout 600;
+        proxy_buffer_size 16k;
+        proxy_busy_buffers_size 24k;
+        proxy_buffers 64 4k;
+        include fastcgi_params;
+    }
+
+}
